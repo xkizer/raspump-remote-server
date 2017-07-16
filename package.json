@@ -1,0 +1,31 @@
+{
+  "name": "raspump-remote",
+  "version": "0.0.1",
+  "description": "Raspberry-controller pump - remote server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kizer",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^1.0.2",
+    "redis": "^2.7.1",
+    "socket.io": "^2.0.3",
+    "tslib": "^1.7.1"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^1.0.0",
+    "@types/chai": "^4.0.1",
+    "@types/chai-as-promised": "0.0.31",
+    "@types/mocha": "^2.2.41",
+    "@types/node": "^8.0.13",
+    "@types/redis": "^2.6.0",
+    "@types/socket.io": "^1.4.29",
+    "chai": "^4.0.2",
+    "chai-as-promised": "^7.1.1",
+    "mocha": "^3.4.2",
+    "ts-node": "^3.2.0",
+    "typescript": "^2.4.1"
+  }
+}
