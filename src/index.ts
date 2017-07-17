@@ -101,3 +101,6 @@ function setupSocket(socket) {
     });
 
 }
+
+exports.Raspump = Raspump;
+exports.pubsub = pubsub;

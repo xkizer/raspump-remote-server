@@ -79,4 +79,6 @@ function setupSocket(socket) {
         });
     });
 }
+exports.Raspump = api_1.Raspump;
+exports.pubsub = pubsub_1.pubsub;
 //# sourceMappingURL=index.js.map
