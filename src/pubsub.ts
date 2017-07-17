@@ -1,0 +1,40 @@
+/**
+ * Created by kizer on 17/07/2017.
+ */
+import {promisify} from "util";
+const redis = require("redis");
+const sub = redis.createClient(), pub = redis.createClient();
+
+const subscribers: {[key: string]: Array<(msg) => any>} = {};
+pub.publish = promisify(pub.publish);
+
+export const pubsub = {
+
+    subscribe(channel: string, cb: (msg) => any): () => any {
+        sub.subscribe(channel);
+        const chann = subscribers[channel] || (subscribers[channel] = []);
+        chann.push(cb);
+
+        return () => {
+            const chann = subscribers[channel] || (subscribers[channel] = []);
+            subscribers[channel] = chann.filter(sub => sub !== cb);
+
+            if (subscribers[channel].length === 0) {
+                // No more subscribers, unsubscribe from redis
+                sub.unsubscribe(channel);
+            }
+        };
+    },
+
+    async publish(channel: string, msg): Promise<any> {
+        return await pub.publish(channel, msg);
+    },
+
+};
+
+// When we receive a message...
+sub.on("message", function (channel, message) {
+    // Forward the message to every subscriber
+    const subs = subscribers[channel] || [];
+    subs.forEach(cb => cb(message));
+});

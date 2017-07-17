@@ -1,3 +1,4 @@
+import {pubsub} from "./pubsub";
 /**
  * Created by kizer on 15/07/2017.
  */
@@ -11,7 +12,16 @@ io.on('connection', function(socket){
     currentConnections[socket.id] = { socket };
 
     socket.on('disconnect', () => {
+        // Remove the saved connection
+        const subs = currentConnections[socket.id].subs;
         delete currentConnections[socket.id];
+
+        // Unsubscribe from all devices
+        if (subs && subs.length > 0) {
+            subs.forEach(sub => {
+                sub.unsub();
+            });
+        }
     });
 
     socket.on('auth', async ({user, password}, cb) => {
@@ -22,7 +32,7 @@ io.on('connection', function(socket){
             return cb(false);
         }
 
-        // Authentication passed, save auth info the socket, and tell user
+        // Authentication passed, save auth info to the socket, and tell user
         currentConnections[socket.id].auth = {user, loggedIn: new Date()};
         cb(true);
 
@@ -59,6 +69,35 @@ function setupSocket(socket) {
 
     socket.on('createUser', ({deviceId, status, date}, cb) => {
         Raspump.syncStatus(deviceId, status, date).then(cb).catch(() => cb());
+    });
+
+    socket.on('subscribe', deviceId => {
+        // This user wants to be notified when something changes about this device
+        const subs = currentConnections[socket.id].subs || (currentConnections[socket.id].subs = []);
+
+        const cb = async () => {
+            const [status, date] = await Promise.all([
+                Raspump.getStatus(deviceId),
+                Raspump.getLastModified(deviceId),
+            ]);
+            socket.emit('status', { deviceId, status, date });
+        };
+
+        subs.push({ deviceId, cb, unsub: pubsub.subscribe(deviceId, cb) });
+    });
+
+    socket.on('unsubscribe', deviceId => {
+        const subs = currentConnections[socket.id].subs || (currentConnections[socket.id].subs = []);
+
+        currentConnections[socket.id].subs = subs.filter(sub => {
+            if (deviceId === sub.deviceId) {
+                const unsub = sub.unsub;
+                unsub();
+                return false;
+            }
+
+            return true;
+        });
     });
 
 }
