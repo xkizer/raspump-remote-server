@@ -26,15 +26,26 @@ describe('Raspump', () => {
         it('should set and return last modified date', async () => {
             const date = new Date();
             await api_1.Raspump.setLastModified(deviceId, date);
-            await new Promise(res => setTimeout(res, 1000));
+            await new Promise(res => setTimeout(res, 100));
             return expect(api_1.Raspump.getLastModified(deviceId)).to.become(date);
+        });
+    });
+    describe('.getStatusAndDate', () => {
+        it('should set and return last modified date with status', async () => {
+            const date = new Date();
+            await Promise.all([
+                api_1.Raspump.setStatus(deviceId, true),
+                api_1.Raspump.setLastModified(deviceId, date),
+            ]);
+            await new Promise(res => setTimeout(res, 100));
+            return expect(api_1.Raspump.getStatusAndDate(deviceId)).to.become({ status: true, date });
         });
     });
     describe('.setStatus', () => {
         it('should also set the last modified', async () => {
             await api_1.Raspump.setStatus(deviceId, true);
             const firstDate = await api_1.Raspump.getLastModified(deviceId);
-            await new Promise(res => setTimeout(res, 1000));
+            await new Promise(res => setTimeout(res, 100));
             await api_1.Raspump.setStatus(deviceId, true);
             const secondDate = await api_1.Raspump.getLastModified(deviceId);
             return Promise.all([
@@ -71,7 +82,7 @@ describe('Raspump', () => {
         });
         it('should update the status if server is out of date', async () => {
             const date = new Date();
-            await new Promise(res => setTimeout(res, 1000)); // Delay a bit to allow reasonable time difference
+            await new Promise(res => setTimeout(res, 100)); // Delay a bit to allow reasonable time difference
             const data = await api_1.Raspump.syncStatus(deviceId, false, date);
             return Promise.all([
                 expect(data).to.deep.equal({ status: false, date, modified: false }),
@@ -81,7 +92,7 @@ describe('Raspump', () => {
         });
         it('should keep current value if the requester is stale', async () => {
             const date = new Date();
-            await new Promise(res => setTimeout(res, 1000)); // Delay a bit to allow reasonable time difference
+            await new Promise(res => setTimeout(res, 100)); // Delay a bit to allow reasonable time difference
             await api_1.Raspump.setStatus(deviceId, false);
             const { status, modified } = await api_1.Raspump.syncStatus(deviceId, true, date);
             return Promise.all([

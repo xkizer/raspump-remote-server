@@ -12,6 +12,15 @@ export const Raspump = {
         return !!+status;
     },
 
+    async getStatusAndDate(deviceId: string): Promise<{status: boolean, date: Date}> {
+        const [status, date] = await Promise.all([
+            this.getStatus(deviceId),
+            this.getLastModified(deviceId),
+        ]);
+
+        return { status, date };
+    },
+
     async setStatus(deviceId: string, status: boolean): Promise<boolean> {
         sanitizeDeviceId(deviceId);
         status = !!+status;

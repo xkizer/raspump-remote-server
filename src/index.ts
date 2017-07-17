@@ -48,7 +48,10 @@ function setupSocket(socket) {
     });
 
     socket.on('setStatus', ({deviceId, status}, cb) => {
-        Raspump.setStatus(deviceId, status).then(cb).catch(() => cb());
+        Raspump.setStatus(deviceId, status)
+            .then(() => pubsub.publish(deviceId, 'status'))
+            .then(cb)
+            .catch(() => cb(false));
     });
 
     socket.on('getLastModified', (deviceId, cb) => {
@@ -56,11 +59,15 @@ function setupSocket(socket) {
     });
 
     socket.on('setLastModified', ({deviceId, date}, cb) => {
-        Raspump.setLastModified(deviceId, new Date(date)).then(cb).catch(() => cb());
+        Raspump.setLastModified(deviceId, new Date(date))
+            .then(() => pubsub.publish(deviceId, 'status'))
+            .then(cb).catch(() => cb());
     });
 
     socket.on('toggleStatus', (deviceId, cb) => {
-        Raspump.toggleStatus(deviceId).then(cb).catch(() => cb());
+        Raspump.toggleStatus(deviceId)
+            .then(() => pubsub.publish(deviceId, 'status'))
+            .then(cb).catch(() => cb());
     });
 
     socket.on('syncStatus', ({deviceId, status, date}, cb) => {

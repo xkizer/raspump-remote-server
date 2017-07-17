@@ -38,16 +38,23 @@ function setupSocket(socket) {
         api_1.Raspump.getStatus(deviceId).then(cb).catch(() => cb());
     });
     socket.on('setStatus', ({ deviceId, status }, cb) => {
-        api_1.Raspump.setStatus(deviceId, status).then(cb).catch(() => cb());
+        api_1.Raspump.setStatus(deviceId, status)
+            .then(() => pubsub_1.pubsub.publish(deviceId, 'status'))
+            .then(cb)
+            .catch(() => cb(false));
     });
     socket.on('getLastModified', (deviceId, cb) => {
         api_1.Raspump.getLastModified(deviceId).then(cb).catch(() => cb());
     });
     socket.on('setLastModified', ({ deviceId, date }, cb) => {
-        api_1.Raspump.setLastModified(deviceId, new Date(date)).then(cb).catch(() => cb());
+        api_1.Raspump.setLastModified(deviceId, new Date(date))
+            .then(() => pubsub_1.pubsub.publish(deviceId, 'status'))
+            .then(cb).catch(() => cb());
     });
     socket.on('toggleStatus', (deviceId, cb) => {
-        api_1.Raspump.toggleStatus(deviceId).then(cb).catch(() => cb());
+        api_1.Raspump.toggleStatus(deviceId)
+            .then(() => pubsub_1.pubsub.publish(deviceId, 'status'))
+            .then(cb).catch(() => cb());
     });
     socket.on('syncStatus', ({ deviceId, status, date }, cb) => {
         api_1.Raspump.syncStatus(deviceId, status, date).then(cb).catch(() => cb());

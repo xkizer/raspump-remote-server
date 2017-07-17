@@ -11,6 +11,13 @@ exports.Raspump = {
         const status = await redisService_1.redisService.hget('status:' + deviceId, 'value');
         return !!+status;
     },
+    async getStatusAndDate(deviceId) {
+        const [status, date] = await Promise.all([
+            this.getStatus(deviceId),
+            this.getLastModified(deviceId),
+        ]);
+        return { status, date };
+    },
     async setStatus(deviceId, status) {
         sanitizeDeviceId(deviceId);
         status = !!+status;
