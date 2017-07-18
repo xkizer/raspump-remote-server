@@ -37,6 +37,7 @@ sub.on("message", function (channel, message) {
     catch (e) {
         unmsg = message;
     }
+    console.log('MESSAGE', channel, message);
     subs.forEach(cb => cb(message));
 });
 //# sourceMappingURL=pubsub.js.map

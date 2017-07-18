@@ -14,6 +14,7 @@ function startSocket(port) {
     io = io(port);
     io.on('connection', function (socket) {
         currentConnections[socket.id] = { socket };
+        console.log('CONNECTED', socket.id);
         socket.on('disconnect', () => {
             // Remove the saved connection
             const subs = currentConnections[socket.id].subs;
@@ -24,9 +25,11 @@ function startSocket(port) {
                     sub.unsub();
                 });
             }
+            console.log('DISCONNECTED', socket.id);
         });
         socket.on('auth', async ({ user, password }, cb) => {
             const auth = await api_1.Raspump.auth(user, password);
+            console.log('AUTHENTICATION RESULT', user, auth, socket.id);
             // Authentication failed, tell the user
             if (!auth) {
                 return cb(false);
@@ -53,6 +56,9 @@ function setupSocket(socket) {
     socket.on('getLastModified', (deviceId, cb) => {
         api_1.Raspump.getLastModified(deviceId).then(cb).catch(() => cb());
     });
+    socket.on('getStatusAndDate', (deviceId, cb) => {
+        api_1.Raspump.getStatusAndDate(deviceId).then(cb).catch(() => cb());
+    });
     socket.on('setLastModified', ({ deviceId, date }, cb) => {
         api_1.Raspump.setLastModified(deviceId, new Date(date))
             .then(args => pubsub_1.pubsub.publish(deviceId, 'status').then(() => args))
@@ -76,13 +82,22 @@ function setupSocket(socket) {
     socket.on('subscribe', deviceId => {
         // This user wants to be notified when something changes about this device
         const subs = currentConnections[socket.id].subs || (currentConnections[socket.id].subs = []);
-        const cb = async () => {
-            const [status, date] = await Promise.all([
-                api_1.Raspump.getStatus(deviceId),
-                api_1.Raspump.getLastModified(deviceId),
-            ]);
-            socket.emit('status', { deviceId, status, date });
-        };
+        let cb;
+        if (deviceId === 'system') {
+            // System events, treat special
+            cb = async (msg) => {
+                socket.emit('system', msg);
+            };
+        }
+        else {
+            cb = async () => {
+                const [status, date] = await Promise.all([
+                    api_1.Raspump.getStatus(deviceId),
+                    api_1.Raspump.getLastModified(deviceId),
+                ]);
+                socket.emit('status', { deviceId, status, date: date.toISOString() });
+            };
+        }
         subs.push({ deviceId, cb, unsub: pubsub_1.pubsub.subscribe(deviceId, cb) });
         // Publish a system event
         pubsub_1.pubsub.publish('system', { event: 'subscribe', socketId: socket.id, deviceId });

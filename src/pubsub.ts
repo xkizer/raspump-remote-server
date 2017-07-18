@@ -44,5 +44,6 @@ sub.on("message", function (channel, message) {
         unmsg = message;
     }
 
+    console.log('MESSAGE', channel, message);
     subs.forEach(cb => cb(message));
 });

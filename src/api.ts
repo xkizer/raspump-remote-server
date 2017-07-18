@@ -57,7 +57,7 @@ export const Raspump = {
             this.getLastModified(deviceId),
         ]);
 
-        if (!currentDate || currentDate < modDate) {
+        if (modDate && (!currentDate || currentDate < modDate)) {
             // Server is outdated
             newStatus = status;
             newDate = modDate;

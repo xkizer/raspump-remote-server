@@ -5,6 +5,9 @@ import {createClient, RedisClient} from 'redis';
 import {promisify} from "util";
 
 const client = createClient();
+// client.select(3, () => {
+//     console.log('REDIS SETUP ON DATABASE 3');
+// });
 
 // Promisify
 const toProm = [
@@ -21,7 +24,6 @@ const toProm = [
     'hmset',
     'del',
 ];
-
 
 export const redisService: redisClient = {} as any;
 
