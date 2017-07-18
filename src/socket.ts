@@ -84,6 +84,7 @@ function setupSocket(socket) {
     });
 
     socket.on('syncStatus', ({deviceId, status, date}, cb) => {
+        console.log('SYNC STATUS', deviceId);
         Raspump.syncStatus(deviceId, status, date)
             .then(args => pubsub.publish(deviceId, 'status').then(() => args))
             .then(cb).catch(() => cb());

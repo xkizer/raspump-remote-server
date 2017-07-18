@@ -31,6 +31,13 @@ describe('pubsub', () => {
                 .then(unsub)
                 .then(() => chai_1.expect(cb).to.have.been.called.with('cryptic message'));
         });
+        it('should reconstruct the message before dispatching events', () => {
+            const unsub = pubsub_1.pubsub.subscribe(deviceId, cb);
+            pubsub_1.pubsub.publish(deviceId, { name: 'Kizer', root: true });
+            return new Promise(res => setTimeout(res, 100))
+                .then(unsub)
+                .then(() => chai_1.expect(cb).to.have.been.called.with({ name: 'Kizer', root: true }));
+        });
         it('should support multiple listeners', () => {
             const cb2 = chai.spy();
             const unsub = pubsub_1.pubsub.subscribe(deviceId, cb);

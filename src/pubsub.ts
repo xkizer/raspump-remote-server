@@ -41,9 +41,10 @@ sub.on("message", function (channel, message) {
     try {
         unmsg = JSON.parse(message);
     } catch (e) {
+        console.error('JSON ERROR', e);
         unmsg = message;
     }
 
-    console.log('MESSAGE', channel, message);
-    subs.forEach(cb => cb(message));
+    console.log('MESSAGE', channel, unmsg);
+    subs.forEach(cb => cb(unmsg));
 });
