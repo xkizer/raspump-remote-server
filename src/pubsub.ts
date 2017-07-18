@@ -27,7 +27,7 @@ export const pubsub = {
     },
 
     async publish(channel: string, msg): Promise<any> {
-        return await pub.publish(channel, msg);
+        return await pub.publish(channel, JSON.stringify(msg));
     },
 
 };
@@ -36,5 +36,13 @@ export const pubsub = {
 sub.on("message", function (channel, message) {
     // Forward the message to every subscriber
     const subs = subscribers[channel] || [];
+    let unmsg;
+
+    try {
+        unmsg = JSON.parse(message);
+    } catch (e) {
+        unmsg = message;
+    }
+
     subs.forEach(cb => cb(message));
 });

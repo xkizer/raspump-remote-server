@@ -23,13 +23,20 @@ exports.pubsub = {
         };
     },
     async publish(channel, msg) {
-        return await pub.publish(channel, msg);
+        return await pub.publish(channel, JSON.stringify(msg));
     },
 };
 // When we receive a message...
 sub.on("message", function (channel, message) {
     // Forward the message to every subscriber
     const subs = subscribers[channel] || [];
+    let unmsg;
+    try {
+        unmsg = JSON.parse(message);
+    }
+    catch (e) {
+        unmsg = message;
+    }
     subs.forEach(cb => cb(message));
 });
 //# sourceMappingURL=pubsub.js.map

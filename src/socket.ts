@@ -54,9 +54,9 @@ function setupSocket(socket) {
 
     socket.on('setStatus', ({deviceId, status}, cb) => {
         Raspump.setStatus(deviceId, status)
-            .then(() => pubsub.publish(deviceId, 'status'))
+            .then(args => pubsub.publish(deviceId, 'status').then(() => args))
             .then(cb)
-            .catch(() => cb(false));
+            .catch(() => cb());
     });
 
     socket.on('getLastModified', (deviceId, cb) => {
@@ -65,22 +65,26 @@ function setupSocket(socket) {
 
     socket.on('setLastModified', ({deviceId, date}, cb) => {
         Raspump.setLastModified(deviceId, new Date(date))
-            .then(() => pubsub.publish(deviceId, 'status'))
+            .then(args => pubsub.publish(deviceId, 'status').then(() => args))
             .then(cb).catch(() => cb());
     });
 
     socket.on('toggleStatus', (deviceId, cb) => {
         Raspump.toggleStatus(deviceId)
-            .then(() => pubsub.publish(deviceId, 'status'))
+            .then(args => pubsub.publish(deviceId, 'status').then(() => args))
             .then(cb).catch(() => cb());
     });
 
     socket.on('syncStatus', ({deviceId, status, date}, cb) => {
-        Raspump.syncStatus(deviceId, status, date).then(cb).catch(() => cb());
+        Raspump.syncStatus(deviceId, status, date)
+            .then(args => pubsub.publish(deviceId, 'status').then(() => args))
+            .then(cb).catch(() => cb());
     });
 
-    socket.on('createUser', ({deviceId, status, date}, cb) => {
-        Raspump.syncStatus(deviceId, status, date).then(cb).catch(() => cb());
+    socket.on('createUser', ({user, password}, cb) => {
+        Raspump.createUser(user, password)
+            .then(args => pubsub.publish('system', {event: 'createUser', user, password}).then(() => args))
+            .then(cb).catch(() => cb());
     });
 
     socket.on('subscribe', deviceId => {
@@ -96,6 +100,9 @@ function setupSocket(socket) {
         };
 
         subs.push({ deviceId, cb, unsub: pubsub.subscribe(deviceId, cb) });
+
+        // Publish a system event
+        pubsub.publish('system', {event: 'subscribe', socketId: socket.id, deviceId});
     });
 
     socket.on('unsubscribe', deviceId => {
@@ -110,6 +117,9 @@ function setupSocket(socket) {
 
             return true;
         });
+
+        // Publish a system event
+        pubsub.publish('system', {event: 'unsubscribe', socketId: socket.id, deviceId});
     });
 
 }
