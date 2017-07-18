@@ -8,10 +8,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const pubsub_1 = require("./pubsub");
 const api_1 = require("./api");
-const io = require('socket.io');
+let io = require('socket.io');
 const currentConnections = {};
 function startSocket(port) {
-    io(port);
+    io = io(port);
     io.on('connection', function (socket) {
         currentConnections[socket.id] = { socket };
         socket.on('disconnect', () => {

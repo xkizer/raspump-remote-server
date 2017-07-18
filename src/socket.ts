@@ -6,12 +6,12 @@
  */
 import {pubsub} from "./pubsub";
 import {Raspump} from "./api";
-const io = require('socket.io');
+let io = require('socket.io');
 
 const currentConnections = {};
 
 export function startSocket(port: number) {
-    io(port);
+    io = io(port);
     io.on('connection', function(socket){
         currentConnections[socket.id] = { socket };
 
