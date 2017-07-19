@@ -10,6 +10,8 @@ let io = require('socket.io');
 
 const currentConnections = {};
 
+const noop = (..._) => {};
+
 export function startSocket(port: number) {
     io = io(port);
     io.on('connection', function(socket){
@@ -40,63 +42,75 @@ export function startSocket(port: number) {
                 return cb(false);
             }
 
+            const alreadySetup = !!currentConnections[socket.id].auth;
+
             // Authentication passed, save auth info to the socket, and tell user
             currentConnections[socket.id].auth = {user, loggedIn: new Date()};
             cb(true);
 
-            // Set up other events for the client
-            setupSocket(socket);
+            // Set up other events for the client, but only if this is the first time this client is authenticating
+            if (!alreadySetup) {
+                setupSocket(socket);
+            }
         });
     });
 }
 
 function setupSocket(socket) {
 
-    socket.on('getStatus', (deviceId, cb) => {
+    socket.on('getStatus', (deviceId, cb = noop) => {
         Raspump.getStatus(deviceId).then(cb).catch(() => cb());
     });
 
-    socket.on('setStatus', ({deviceId, status}, cb) => {
+    socket.on('setStatus', ({deviceId, status}, cb = noop) => {
         Raspump.setStatus(deviceId, status)
             .then(args => pubsub.publish(deviceId, 'status').then(() => args))
             .then(cb)
             .catch(() => cb());
     });
 
-    socket.on('getLastModified', (deviceId, cb) => {
+    socket.on('getLastModified', (deviceId, cb = noop) => {
         Raspump.getLastModified(deviceId).then(cb).catch(() => cb());
     });
 
-    socket.on('getStatusAndDate', (deviceId, cb) => {
+    socket.on('getStatusAndDate', (deviceId, cb = noop) => {
         Raspump.getStatusAndDate(deviceId).then(cb).catch(() => cb());
     });
 
-    socket.on('setLastModified', ({deviceId, date}, cb) => {
+    socket.on('setLastModified', ({deviceId, date}, cb = noop) => {
         Raspump.setLastModified(deviceId, new Date(date))
             .then(args => pubsub.publish(deviceId, 'status').then(() => args))
             .then(cb).catch(() => cb());
     });
 
-    socket.on('toggleStatus', (deviceId, cb) => {
+    socket.on('toggleStatus', (deviceId, cb = noop) => {
         Raspump.toggleStatus(deviceId)
             .then(args => pubsub.publish(deviceId, 'status').then(() => args))
             .then(cb).catch(() => cb());
     });
 
-    socket.on('syncStatus', ({deviceId, status, date}, cb) => {
+    socket.on('syncStatus', ({deviceId, status, date}, cb = noop) => {
         console.log('SYNC STATUS', deviceId);
         Raspump.syncStatus(deviceId, status, date)
-            .then(args => pubsub.publish(deviceId, 'status').then(() => args))
+            .then(args => {
+                if (!args.modified) {
+                    // Client not modified, server stale
+                    return pubsub.publish(deviceId, 'status').then(() => args)
+                }
+
+                return args;
+            })
             .then(cb).catch(() => cb());
     });
 
-    socket.on('createUser', ({user, password}, cb) => {
+    socket.on('createUser', ({user, password}, cb = noop) => {
         Raspump.createUser(user, password)
             .then(args => pubsub.publish('system', {event: 'createUser', user, password}).then(() => args))
             .then(cb).catch(() => cb());
     });
 
-    socket.on('subscribe', (deviceId, ack) => {
+    socket.on('subscribe', (deviceId, ack = noop) => {
+        console.log('SUBSCRIPTION REQUEST', deviceId, socket.id);
         // This user wants to be notified when something changes about this device
         const subs = currentConnections[socket.id].subs || (currentConnections[socket.id].subs = []);
         let cb;

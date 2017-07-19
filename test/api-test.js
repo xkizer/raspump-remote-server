@@ -90,6 +90,18 @@ describe('Raspump', () => {
                 expect(api_1.Raspump.getLastModified(deviceId)).to.become(date),
             ]);
         });
+        it('should compare all dates properly', async () => {
+            const date = new Date('2017-07-19T00:55:20.188Z');
+            const date2 = new Date('2017-07-19T01:55:20.188Z');
+            api_1.Raspump.setLastModified(deviceId, date);
+            await new Promise(res => setTimeout(res, 100)); // Delay a bit to allow reasonable time difference
+            const data = await api_1.Raspump.syncStatus(deviceId, false, date2.toISOString());
+            return Promise.all([
+                expect(data).to.deep.equal({ status: false, date: date2, modified: false }),
+                expect(api_1.Raspump.getStatus(deviceId)).to.become(false),
+                expect(api_1.Raspump.getLastModified(deviceId)).to.become(date2),
+            ]);
+        });
         it('should keep current value if the requester is stale', async () => {
             const date = new Date();
             await new Promise(res => setTimeout(res, 100)); // Delay a bit to allow reasonable time difference

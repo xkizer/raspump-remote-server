@@ -51,6 +51,7 @@ export const Raspump = {
         let newStatus: boolean;
         let newDate: Date;
         let isModified = false;
+        modDate = new Date(modDate);
 
         const [currentStatus, currentDate] = await Promise.all([
             this.getStatus(deviceId),
