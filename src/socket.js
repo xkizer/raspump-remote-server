@@ -80,7 +80,7 @@ function setupSocket(socket) {
             .then(args => pubsub_1.pubsub.publish('system', { event: 'createUser', user, password }).then(() => args))
             .then(cb).catch(() => cb());
     });
-    socket.on('subscribe', deviceId => {
+    socket.on('subscribe', (deviceId, ack) => {
         // This user wants to be notified when something changes about this device
         const subs = currentConnections[socket.id].subs || (currentConnections[socket.id].subs = []);
         let cb;
@@ -102,8 +102,9 @@ function setupSocket(socket) {
         subs.push({ deviceId, cb, unsub: pubsub_1.pubsub.subscribe(deviceId, cb) });
         // Publish a system event
         pubsub_1.pubsub.publish('system', { event: 'subscribe', socketId: socket.id, deviceId });
+        ack(true);
     });
-    socket.on('unsubscribe', deviceId => {
+    socket.on('unsubscribe', (deviceId, ack) => {
         const subs = currentConnections[socket.id].subs || (currentConnections[socket.id].subs = []);
         currentConnections[socket.id].subs = subs.filter(sub => {
             if (deviceId === sub.deviceId) {
@@ -115,6 +116,7 @@ function setupSocket(socket) {
         });
         // Publish a system event
         pubsub_1.pubsub.publish('system', { event: 'unsubscribe', socketId: socket.id, deviceId });
+        ack(true);
     });
 }
 exports.Raspump = api_1.Raspump;

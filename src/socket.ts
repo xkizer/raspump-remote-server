@@ -96,7 +96,7 @@ function setupSocket(socket) {
             .then(cb).catch(() => cb());
     });
 
-    socket.on('subscribe', deviceId => {
+    socket.on('subscribe', (deviceId, ack) => {
         // This user wants to be notified when something changes about this device
         const subs = currentConnections[socket.id].subs || (currentConnections[socket.id].subs = []);
         let cb;
@@ -121,9 +121,10 @@ function setupSocket(socket) {
 
         // Publish a system event
         pubsub.publish('system', {event: 'subscribe', socketId: socket.id, deviceId});
+        ack(true);
     });
 
-    socket.on('unsubscribe', deviceId => {
+    socket.on('unsubscribe', (deviceId, ack) => {
         const subs = currentConnections[socket.id].subs || (currentConnections[socket.id].subs = []);
 
         currentConnections[socket.id].subs = subs.filter(sub => {
@@ -138,6 +139,7 @@ function setupSocket(socket) {
 
         // Publish a system event
         pubsub.publish('system', {event: 'unsubscribe', socketId: socket.id, deviceId});
+        ack(true);
     });
 
 }
