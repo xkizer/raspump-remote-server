@@ -33,9 +33,9 @@ export function startSocket(port: number) {
             console.log('DISCONNECTED', socket.id);
         });
 
-        socket.on('auth', async ({user, password}, cb) => {
+        socket.on('auth', async ({user, password}, cb = noop) => {
             const auth = await Raspump.auth(user, password);
-            console.log('AUTHENTICATION RESULT', user, auth, socket.id);
+            console.log('AUTHENTICATION RESULT', user, password, auth, socket.id);
 
             // Authentication failed, tell the user
             if (!auth) {
