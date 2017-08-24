@@ -1,9 +1,6 @@
 /**
  * Created by kizer on 18/07/2017.
  */
-/**
- * Created by kizer on 15/07/2017.
- */
 import {pubsub} from "./pubsub";
 import {Raspump} from "./api";
 let io = require('socket.io');
@@ -15,7 +12,7 @@ const noop = (..._) => {};
 export function startSocket(port: number) {
     io = io(port);
     io.on('connection', function(socket){
-        currentConnections[socket.id] = { socket };
+        currentConnections[socket.id] = { socket, subs: [] };
         console.log('CONNECTED', socket.id);
 
         socket.on('disconnect', () => {
@@ -112,7 +109,7 @@ function setupSocket(socket) {
     socket.on('subscribe', (deviceId, ack = noop) => {
         console.log('SUBSCRIPTION REQUEST', deviceId, socket.id);
         // This user wants to be notified when something changes about this device
-        const subs = currentConnections[socket.id].subs || (currentConnections[socket.id].subs = []);
+        const subs = currentConnections[socket.id] && currentConnections[socket.id].subs || (currentConnections[socket.id].subs = []);
         let cb;
 
         if (deviceId === 'system') {
@@ -120,6 +117,8 @@ function setupSocket(socket) {
             cb = async msg => {
                 socket.emit('system', msg);
             };
+        } else if (!deviceId) {
+            return ack(false);
         } else {
             cb = async () => {
                 const [status, date] = await Promise.all([
@@ -139,7 +138,7 @@ function setupSocket(socket) {
     });
 
     socket.on('unsubscribe', (deviceId, ack) => {
-        const subs = currentConnections[socket.id].subs || (currentConnections[socket.id].subs = []);
+        const subs = currentConnections[socket.id] && currentConnections[socket.id].subs || (currentConnections[socket.id].subs = []);
 
         currentConnections[socket.id].subs = subs.filter(sub => {
             if (deviceId === sub.deviceId) {
